@@ -1,0 +1,230 @@
+[
+  {
+    "scenario": {
+      "description": "I want to create a parody music video that uses the melody of a popular pop song but changes all the lyrics to make fun of social media culture.",
+      "work_type": "Music/Song",
+      "use_type": "parody",
+      "amount_used": 60,
+      "is_commercial": false,
+      "purpose": "Social commentary through parody of the original song",
+      "licensing_available": false,
+      "additional_context": "The parody transforms the meaning completely, using the recognizable melody to critique social media addiction."
+    },
+    "expected_factor_bias": {
+      "factor_1": "favors",
+      "factor_2": "slightly_against",
+      "factor_3": "neutral",
+      "factor_4": "favors"
+    },
+    "notes": "Campbell v. Acuff-Rose Music (1994) — parody is paradigmatic fair use"
+  },
+  {
+    "scenario": {
+      "description": "I run an online store and want to use a professional photographer's images of my products that she took during a paid photoshoot. The contract didn't specify web usage rights.",
+      "work_type": "Photograph",
+      "use_type": "commercial_remix",
+      "amount_used": 100,
+      "is_commercial": true,
+      "purpose": "Product marketing on e-commerce website",
+      "licensing_available": true,
+      "additional_context": "The photos were taken by a professional photographer under a contract that covered print usage only."
+    },
+    "expected_factor_bias": {
+      "factor_1": "against",
+      "factor_2": "slightly_against",
+      "factor_3": "against",
+      "factor_4": "against"
+    },
+    "notes": "Non-transformative commercial use of entire creative work with available licensing"
+  },
+  {
+    "scenario": {
+      "description": "I'm a teacher creating a course packet that includes three chapters from a copyrighted textbook for my nonprofit community college class.",
+      "work_type": "Textbook / Educational Material",
+      "use_type": "nonprofit_education",
+      "amount_used": 25,
+      "is_commercial": false,
+      "purpose": "Educational use in a nonprofit community college course",
+      "licensing_available": true,
+      "additional_context": "The textbook publisher offers a course licensing program but it costs $500 per semester."
+    },
+    "expected_factor_bias": {
+      "factor_1": "favors",
+      "factor_2": "favors",
+      "factor_3": "slightly_against",
+      "factor_4": "against"
+    },
+    "notes": "Michigan Document Services / Cambridge Univ. Press v. Patton line of cases"
+  },
+  {
+    "scenario": {
+      "description": "I want to build a search engine that indexes and displays thumbnail versions of images found across the web, similar to Google Images.",
+      "work_type": "Photographs and Digital Images",
+      "use_type": "search_engine",
+      "amount_used": 100,
+      "is_commercial": true,
+      "purpose": "Providing an image search index to help users find images across the internet",
+      "licensing_available": false,
+      "additional_context": "Images are copied in full but displayed only as small thumbnails with links back to original sources."
+    },
+    "expected_factor_bias": {
+      "factor_1": "strongly_favors",
+      "factor_2": "slightly_against",
+      "factor_3": "neutral",
+      "factor_4": "favors"
+    },
+    "notes": "Perfect 10 v. Amazon / Kelly v. Arriba Soft"
+  },
+  {
+    "scenario": {
+      "description": "I'm writing a biography of a living musician and want to quote extensively from their unpublished personal letters and diary entries.",
+      "work_type": "Unpublished letters and diary entries",
+      "use_type": "biographical_excerpt",
+      "amount_used": 30,
+      "is_commercial": true,
+      "purpose": "Biographical research and documentation of the subject's life",
+      "licensing_available": false,
+      "additional_context": "The letters are unpublished and the musician has not authorized the biography."
+    },
+    "expected_factor_bias": {
+      "factor_1": "slightly_against",
+      "factor_2": "strongly_against",
+      "factor_3": "against",
+      "factor_4": "against"
+    },
+    "notes": "Harper & Row v. Nation Enterprises / Salinger v. Random House"
+  },
+  {
+    "scenario": {
+      "description": "I'm developing a news aggregation app that displays the first paragraph and headline of articles from major news sites.",
+      "work_type": "News Articles",
+      "use_type": "news_reporting",
+      "amount_used": 10,
+      "is_commercial": true,
+      "purpose": "News aggregation and distribution to inform the public",
+      "licensing_available": true,
+      "additional_context": "The app displays headlines, first paragraphs, and links back to the original articles."
+    },
+    "expected_factor_bias": {
+      "factor_1": "favors",
+      "factor_2": "favors",
+      "factor_3": "favors",
+      "factor_4": "slightly_against"
+    },
+    "notes": "AP v. Meltwater — news aggregation with available licensing"
+  },
+  {
+    "scenario": {
+      "description": "I am a visual artist creating a series of silkscreen prints based on a photographer's portrait, adding bright colors and graphic elements in the style of pop art, and selling them through galleries.",
+      "work_type": "Photograph",
+      "use_type": "artistic_appropriation",
+      "amount_used": 90,
+      "is_commercial": true,
+      "purpose": "Creating original artwork that comments on celebrity culture through pop art aesthetic",
+      "licensing_available": true,
+      "additional_context": "The original photographer licenses the portrait for magazine covers and commercial use. My prints are sold in the same market as licensed prints."
+    },
+    "expected_factor_bias": {
+      "factor_1": "against",
+      "factor_2": "against",
+      "factor_3": "against",
+      "factor_4": "against"
+    },
+    "notes": "Andy Warhol Foundation v. Goldsmith (2023) — post-Warhol, same-purpose commercial use"
+  },
+  {
+    "scenario": {
+      "description": "I'm training a large language model on copyrighted books, ingesting the full text to learn patterns but never outputting verbatim passages to users.",
+      "work_type": "Literary Work/Book",
+      "use_type": "ai_training",
+      "amount_used": 100,
+      "is_commercial": true,
+      "purpose": "Training AI models to understand language patterns for a commercial chatbot product",
+      "licensing_available": false,
+      "additional_context": "The model learns from the text but doesn't store or reproduce the original works. The output is generated text, not copied passages."
+    },
+    "expected_factor_bias": {
+      "factor_1": "neutral",
+      "factor_2": "against",
+      "factor_3": "against",
+      "factor_4": "neutral"
+    },
+    "notes": "Authors Guild v. Google (analogy), NYT v. OpenAI (pending) — highly contested area"
+  },
+  {
+    "scenario": {
+      "description": "I recorded a college lecture where the professor displayed several copyrighted diagrams from a textbook. I want to upload the recording to a free educational YouTube channel.",
+      "work_type": "Academic Paper",
+      "use_type": "nonprofit_education",
+      "amount_used": 15,
+      "is_commercial": false,
+      "purpose": "Free educational content sharing for students who cannot attend lectures",
+      "licensing_available": false,
+      "additional_context": "The diagrams are incidental to the lecture content, shown briefly on screen. The channel has no ads or monetization."
+    },
+    "expected_factor_bias": {
+      "factor_1": "favors",
+      "factor_2": "slightly_against",
+      "factor_3": "favors",
+      "factor_4": "favors"
+    },
+    "notes": "Nonprofit educational with incidental use of small portion"
+  },
+  {
+    "scenario": {
+      "description": "I want to use a 10-second clip of a copyrighted song as background music in a TikTok video advertising my clothing brand.",
+      "work_type": "Music/Song",
+      "use_type": "commercial_remix",
+      "amount_used": 8,
+      "is_commercial": true,
+      "purpose": "Background music for social media product advertisement",
+      "licensing_available": true,
+      "additional_context": "The song is popular and the clip includes the recognizable chorus hook. TikTok has licensing agreements with some labels but not this one."
+    },
+    "expected_factor_bias": {
+      "factor_1": "against",
+      "factor_2": "against",
+      "factor_3": "slightly_against",
+      "factor_4": "against"
+    },
+    "notes": "Non-transformative commercial use of heart of creative work with available licensing"
+  },
+  {
+    "scenario": {
+      "description": "I run a nonprofit digital archive and want to preserve out-of-print books by scanning them and making them available online to researchers.",
+      "work_type": "Literary Work/Book",
+      "use_type": "archival",
+      "amount_used": 100,
+      "is_commercial": false,
+      "purpose": "Preservation and scholarly access to culturally significant out-of-print works",
+      "licensing_available": false,
+      "additional_context": "The books are out of print with no available commercial editions. Access is limited to registered researchers."
+    },
+    "expected_factor_bias": {
+      "factor_1": "favors",
+      "factor_2": "neutral",
+      "factor_3": "slightly_against",
+      "factor_4": "favors"
+    },
+    "notes": "HathiTrust — archival of full works for transformative purpose"
+  },
+  {
+    "scenario": {
+      "description": "I'm reimplementing the API of a popular programming language's standard library in a competing platform to let developers use their existing skills.",
+      "work_type": "Software/Code",
+      "use_type": "software_api",
+      "amount_used": 5,
+      "is_commercial": true,
+      "purpose": "Allowing developers to use familiar API declarations in a new computing platform",
+      "licensing_available": false,
+      "additional_context": "Only the API declarations (method signatures, class names) are copied, not the implementing code. The new platform is a competitor."
+    },
+    "expected_factor_bias": {
+      "factor_1": "strongly_favors",
+      "factor_2": "favors",
+      "factor_3": "favors",
+      "factor_4": "favors"
+    },
+    "notes": "Google LLC v. Oracle America (2021)"
+  }
+]
