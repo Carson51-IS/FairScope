@@ -25,10 +25,10 @@ function SignupForm() {
 
     try {
       const supabase = createClient();
-      const { data, error: err } = await supabase.auth.signUp(
-        { email: email.trim().toLowerCase(), password },
-        { emailRedirectTo: typeof window !== "undefined" ? `${window.location.origin}/auth/callback` : undefined }
-      );
+      const { data, error: err } = await supabase.auth.signUp({
+        email: email.trim().toLowerCase(),
+        password,
+      });
 
       if (err) {
         setError(err.message);
