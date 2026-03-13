@@ -1,13 +1,13 @@
 import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import HomeCTA from "@/components/HomeCTA";
 import {
   Scale,
   BookOpen,
   Shield,
   Search,
   FileText,
-  ArrowRight,
   CheckCircle2,
   AlertCircle,
 } from "lucide-react";
@@ -49,15 +49,7 @@ export default function HomePage() {
               precedent status tracking.
             </p>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link
-                href="/analyze"
-                className="group flex items-center gap-2 bg-gold-500 hover:bg-gold-400 text-navy-950 px-8 py-4 rounded-xl text-lg font-semibold transition-all shadow-lg shadow-gold-500/25 hover:shadow-gold-500/40"
-              >
-                Analyze My Proposed Use
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Link>
-            </div>
+            <HomeCTA />
           </div>
         </div>
 
@@ -266,13 +258,7 @@ export default function HomePage() {
             law. FairScope shows you how courts have treated similar uses under
             &sect; 107.
           </p>
-          <Link
-            href="/analyze"
-            className="group inline-flex items-center gap-2 bg-gold-500 hover:bg-gold-400 text-navy-950 px-8 py-4 rounded-xl text-lg font-semibold transition-all shadow-lg shadow-gold-500/25 hover:shadow-gold-500/40"
-          >
-            Start Your Analysis
-            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-          </Link>
+          <HomeCTA />
         </div>
       </section>
 

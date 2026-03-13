@@ -1,16 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ScenarioForm from "@/components/ScenarioForm";
+import Paywall from "@/components/Paywall";
 import type { ScenarioInput, AnalysisResult } from "@/lib/types";
 
 export default function AnalyzePage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [subscribed, setSubscribed] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    fetch("/api/subscription/status")
+      .then((r) => r.json())
+      .then((d) => setSubscribed(!!d.active))
+      .catch(() => setSubscribed(false));
+  }, []);
 
   const handleSubmit = async (scenario: ScenarioInput) => {
     setIsLoading(true);
@@ -43,6 +52,30 @@ export default function AnalyzePage() {
       setIsLoading(false);
     }
   };
+
+  if (subscribed === null) {
+    return (
+      <div className="min-h-screen flex flex-col bg-navy-50">
+        <Header />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-navy-200 border-t-gold-500" />
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!subscribed) {
+    return (
+      <div className="min-h-screen flex flex-col bg-navy-50">
+        <Header />
+        <main className="flex-1 flex items-center justify-center p-8">
+          <Paywall />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-navy-50">

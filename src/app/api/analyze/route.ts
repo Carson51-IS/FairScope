@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import { getSubscriptionStatus } from "@/lib/subscription";
 import { analyzeScenario } from "@/lib/analysis";
+
+export const dynamic = "force-dynamic";
 import type { ScenarioInput } from "@/lib/types";
 import type { UseType } from "@/lib/types";
 
@@ -113,6 +117,23 @@ function validateScenarioInput(body: unknown): {
 
 export async function POST(request: Request) {
   try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const status = await getSubscriptionStatus(user.id);
+    if (!status.active) {
+      return NextResponse.json(
+        { error: "Active subscription required" },
+        { status: 403 }
+      );
+    }
+
     let body: unknown;
     try {
       body = await request.json();

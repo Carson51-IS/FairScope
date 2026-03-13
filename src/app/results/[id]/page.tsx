@@ -9,6 +9,7 @@ import FactorCard from "@/components/FactorCard";
 import FactorTable from "@/components/FactorTable";
 import PrecedentStatus from "@/components/PrecedentStatus";
 import Disclaimer from "@/components/Disclaimer";
+import ResultChat from "@/components/ResultChat";
 import type { AnalysisResult } from "@/lib/types";
 import {
   ArrowLeft,
@@ -596,6 +597,11 @@ export default function ResultsPage() {
                 ))}
               </div>
             </CollapsiblePanel>
+          </section>
+
+          {/* Ask questions about this analysis */}
+          <section className="mb-8">
+            <ResultChat result={result} />
           </section>
 
           {/* Action Bar */}
