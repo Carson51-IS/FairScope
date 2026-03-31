@@ -17,8 +17,9 @@ export async function getSubscriptionStatus(userId: string): Promise<{
       return { active: false };
     }
 
+    const activeStatuses = ["active", "canceling", "trialing"];
     const isActive =
-      data.status === "active" &&
+      activeStatuses.includes(data.status) &&
       data.current_period_end &&
       new Date(data.current_period_end) > new Date();
 

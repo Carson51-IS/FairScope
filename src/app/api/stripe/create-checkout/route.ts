@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@/lib/supabase/server";
+import { getSupabaseServer } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
 
@@ -30,22 +31,32 @@ export async function POST() {
     }
 
     const stripe = getStripe();
-    const session = await stripe.checkout.sessions.create({
+    const baseUrl =
+      process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
+    const db = getSupabaseServer();
+    const { data: existingSub } = await db
+      .from("subscriptions")
+      .select("stripe_customer_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    const sessionParams: Stripe.Checkout.SessionCreateParams = {
       mode: "subscription",
       payment_method_types: ["card"],
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
-        },
-      ],
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/settings?success=true`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/settings?canceled=true`,
-      customer_email: user.email ?? undefined,
-      metadata: {
-        user_id: user.id,
-      },
-    });
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${baseUrl}/analyze?checkout=success`,
+      cancel_url: `${baseUrl}/analyze?checkout=canceled`,
+      metadata: { user_id: user.id },
+    };
+
+    if (existingSub?.stripe_customer_id) {
+      sessionParams.customer = existingSub.stripe_customer_id;
+    } else {
+      sessionParams.customer_email = user.email ?? undefined;
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
 
     return NextResponse.json({ url: session.url });
   } catch (err) {

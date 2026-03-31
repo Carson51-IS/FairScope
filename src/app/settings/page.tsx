@@ -5,7 +5,13 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import { Settings, CreditCard, Trash2, LogOut } from "lucide-react";
+import {
+  Settings,
+  CreditCard,
+  Trash2,
+  LogOut,
+  ExternalLink,
+} from "lucide-react";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -34,17 +40,15 @@ export default function SettingsPage() {
     load();
   }, []);
 
-  const handleCancelSubscription = async () => {
-    if (!confirm("Cancel your subscription? You will lose access at the end of the current period.")) return;
+  const handleManageBilling = async () => {
     setPortalLoading(true);
     try {
-      const res = await fetch("/api/subscription/cancel", { method: "POST" });
-      if (res.ok) {
-        const res2 = await fetch("/api/subscription/status");
-        const data = await res2.json();
-        setSubStatus(data);
+      const res = await fetch("/api/stripe/create-portal", { method: "POST" });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
       }
-    } finally {
+    } catch {
       setPortalLoading(false);
     }
   };
@@ -52,24 +56,29 @@ export default function SettingsPage() {
   const handleSubscribe = async () => {
     setCheckoutLoading(true);
     try {
-      const res = await fetch("/api/subscription/subscribe", { method: "POST" });
-      if (res.ok) {
-        const res2 = await fetch("/api/subscription/status");
-        const data = await res2.json();
-        setSubStatus(data);
+      const res = await fetch("/api/stripe/create-checkout", {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        setCheckoutLoading(false);
       }
-    } finally {
+    } catch {
       setCheckoutLoading(false);
     }
   };
 
   const handleClearChat = async () => {
-    if (!confirm("Clear all chat history? This cannot be undone.")) return;
+    if (
+      !confirm("Clear all chat history? This cannot be undone.")
+    )
+      return;
     setClearLoading(true);
     try {
       await fetch("/api/chat/clear", { method: "POST" });
-      setClearLoading(false);
-    } catch {
+    } finally {
       setClearLoading(false);
     }
   };
@@ -106,6 +115,7 @@ export default function SettingsPage() {
         </div>
 
         <div className="space-y-6">
+          {/* Subscription */}
           <section className="bg-white rounded-xl border border-navy-200 shadow-md p-6">
             <div className="flex items-center gap-2 mb-4">
               <CreditCard className="w-5 h-5 text-gold-600" />
@@ -114,58 +124,71 @@ export default function SettingsPage() {
 
             {subStatus?.active ? (
               <div>
-                <p className="text-emerald-700 text-sm font-medium mb-2">
-                  Pro plan active
-                </p>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-emerald-100 text-emerald-800 border border-emerald-200">
+                    Pro Active
+                  </span>
+                </div>
                 {subStatus.currentPeriodEnd && (
                   <p className="text-navy-600 text-xs mb-4">
-                    Renews {new Date(subStatus.currentPeriodEnd).toLocaleDateString()}
+                    Current period ends{" "}
+                    {new Date(subStatus.currentPeriodEnd).toLocaleDateString()}
                   </p>
                 )}
                 <button
-                  onClick={handleCancelSubscription}
+                  onClick={handleManageBilling}
                   disabled={portalLoading}
-                  className="px-4 py-2 rounded-lg border border-red-200 text-red-700 hover:bg-red-50 text-sm font-medium disabled:opacity-50"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg border border-navy-200 text-navy-700 hover:bg-navy-50 text-sm font-medium disabled:opacity-50 transition-colors"
                 >
-                  {portalLoading ? "Canceling..." : "Cancel subscription"}
+                  <ExternalLink className="w-4 h-4" />
+                  {portalLoading
+                    ? "Opening portal..."
+                    : "Manage Billing on Stripe"}
                 </button>
                 <p className="text-navy-500 text-xs mt-2">
-                  Cancel to stop access at the end of your billing period.
+                  Update payment method, change plan, or cancel via the Stripe
+                  customer portal.
                 </p>
               </div>
             ) : (
               <div>
                 <p className="text-navy-600 text-sm mb-4">
-                  Subscribe to access analysis and chat.
+                  Subscribe to access unlimited analyses and AI-powered chat.
                 </p>
                 <button
                   onClick={handleSubscribe}
                   disabled={checkoutLoading}
-                  className="px-4 py-2 rounded-lg bg-gold-500 hover:bg-gold-600 text-navy-950 font-semibold disabled:opacity-50"
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-gold-500 hover:bg-gold-600 text-navy-950 font-semibold text-sm disabled:opacity-50 transition-colors"
                 >
-                  {checkoutLoading ? "Subscribing..." : "Subscribe for $1/month"}
+                  <CreditCard className="w-4 h-4" />
+                  {checkoutLoading
+                    ? "Redirecting..."
+                    : "Subscribe for $1/month"}
                 </button>
               </div>
             )}
           </section>
 
+          {/* Chat memory */}
           <section className="bg-white rounded-xl border border-navy-200 shadow-md p-6">
             <div className="flex items-center gap-2 mb-4">
               <Trash2 className="w-5 h-5 text-gold-600" />
-              <h2 className="font-semibold text-navy-900">Chat memory</h2>
+              <h2 className="font-semibold text-navy-900">Chat Memory</h2>
             </div>
             <p className="text-navy-600 text-sm mb-4">
-              Clear your chat history. The AI will no longer reference past conversations.
+              Clear your chat history. The AI will no longer reference past
+              conversations.
             </p>
             <button
               onClick={handleClearChat}
               disabled={clearLoading || !subStatus?.active}
-              className="px-4 py-2 rounded-lg border border-red-200 text-red-700 hover:bg-red-50 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 rounded-lg border border-red-200 text-red-700 hover:bg-red-50 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {clearLoading ? "Clearing..." : "Clear chat history"}
             </button>
           </section>
 
+          {/* Account */}
           <section className="bg-white rounded-xl border border-navy-200 shadow-md p-6">
             <div className="flex items-center gap-2 mb-4">
               <LogOut className="w-5 h-5 text-gold-600" />
@@ -173,7 +196,7 @@ export default function SettingsPage() {
             </div>
             <button
               onClick={handleLogout}
-              className="px-4 py-2 rounded-lg border border-navy-200 text-navy-700 hover:bg-navy-50 text-sm font-medium"
+              className="px-4 py-2 rounded-lg border border-navy-200 text-navy-700 hover:bg-navy-50 text-sm font-medium transition-colors"
             >
               Log out
             </button>

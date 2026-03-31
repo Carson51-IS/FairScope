@@ -1,8 +1,15 @@
 import { NextResponse } from "next/server";
+import Stripe from "stripe";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseServer } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
+
+function getStripe() {
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) throw new Error("STRIPE_SECRET_KEY not set");
+  return new Stripe(key);
+}
 
 export async function POST() {
   try {
@@ -16,20 +23,38 @@ export async function POST() {
     }
 
     const db = getSupabaseServer();
-    const { error } = await db
+    const { data: sub } = await db
+      .from("subscriptions")
+      .select("stripe_subscription_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (!sub?.stripe_subscription_id) {
+      return NextResponse.json(
+        { error: "No active subscription" },
+        { status: 400 }
+      );
+    }
+
+    const stripe = getStripe();
+    await stripe.subscriptions.update(sub.stripe_subscription_id, {
+      cancel_at_period_end: true,
+    });
+
+    await db
       .from("subscriptions")
       .update({
-        status: "canceled",
+        status: "canceling",
         updated_at: new Date().toISOString(),
       })
       .eq("user_id", user.id);
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
     return NextResponse.json({ ok: true });
-  } catch {
-    return NextResponse.json({ error: "Failed to cancel" }, { status: 500 });
+  } catch (err) {
+    console.error("[cancel]", err);
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Failed to cancel" },
+      { status: 500 }
+    );
   }
 }
