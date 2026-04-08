@@ -9,12 +9,20 @@ export async function getSubscriptionStatus(userId: string): Promise<{
     const supabase = getSupabaseServer();
     const { data, error } = await supabase
       .from("subscriptions")
-      .select("status, current_period_end")
+      .select("status, current_period_end, stripe_subscription_id")
       .eq("user_id", userId)
       .maybeSingle();
 
     if (error || !data) {
       return { active: false };
+    }
+
+    const hasPaidStripeSub =
+      typeof data.stripe_subscription_id === "string" &&
+      data.stripe_subscription_id.length > 0;
+
+    if (!hasPaidStripeSub) {
+      return { active: false, status: data.status ?? undefined };
     }
 
     const activeStatuses = ["active", "canceling", "trialing"];

@@ -41,10 +41,10 @@ export default function Paywall() {
             <Lock className="w-8 h-8 text-navy-950" />
           </div>
           <h2 className="font-display text-2xl font-bold text-white mb-2">
-            FairScope Pro
+            Subscribe to FairScope
           </h2>
           <p className="text-navy-300 text-sm">
-            Unlock full access to AI-powered fair use analysis
+            Pay securely with Stripe to unlock analysis and chat
           </p>
         </div>
 

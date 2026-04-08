@@ -60,10 +60,10 @@ export default function HomeCTA() {
     return (
       <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
         <Link
-          href="/settings"
+          href="/analyze"
           className="group flex items-center gap-2 bg-gold-500 hover:bg-gold-400 text-navy-950 px-8 py-4 rounded-xl text-lg font-semibold transition-all shadow-lg shadow-gold-500/25 hover:shadow-gold-500/40"
         >
-          Subscribe for $1/month
+          Subscribe with Stripe — $1/month
           <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
         </Link>
       </div>

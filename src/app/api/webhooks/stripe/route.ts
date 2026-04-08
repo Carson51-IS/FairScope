@@ -1,19 +1,15 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { getSupabaseServer, isSupabaseConfigured } from "@/lib/supabase";
+import {
+  subscriptionPeriodEndIso,
+  upsertSubscriptionFromStripe,
+} from "@/lib/stripeSubscription";
 
 function getStripe() {
   const key = process.env.STRIPE_SECRET_KEY;
   if (!key) throw new Error("STRIPE_SECRET_KEY not set");
   return new Stripe(key);
-}
-
-function getPeriodEnd(subscription: Stripe.Subscription): string | null {
-  const firstItem = subscription.items?.data?.[0];
-  if (firstItem?.current_period_end) {
-    return new Date(firstItem.current_period_end * 1000).toISOString();
-  }
-  return null;
 }
 
 export async function POST(request: Request) {
@@ -77,28 +73,29 @@ export async function POST(request: Request) {
         );
         const customerId = subscription.customer as string;
 
-        await supabase.from("subscriptions").upsert(
-          {
-            user_id: userId,
-            stripe_customer_id: customerId,
-            stripe_subscription_id: subscriptionId,
-            status: subscription.status,
-            current_period_end: getPeriodEnd(subscription),
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: "user_id" }
-        );
+        await upsertSubscriptionFromStripe(supabase, {
+          userId,
+          stripeCustomerId: customerId,
+          stripeSubscriptionId: subscription.id,
+          status: subscription.status,
+          currentPeriodEnd: subscriptionPeriodEndIso(subscription),
+        });
         break;
       }
 
       case "customer.subscription.updated": {
-        const subscription = event.data.object as Stripe.Subscription;
+        let subscription = event.data.object as Stripe.Subscription;
+        if (!subscriptionPeriodEndIso(subscription)) {
+          subscription = await stripe.subscriptions.retrieve(subscription.id, {
+            expand: ["items.data"],
+          });
+        }
 
         await supabase
           .from("subscriptions")
           .update({
             status: subscription.status,
-            current_period_end: getPeriodEnd(subscription),
+            current_period_end: subscriptionPeriodEndIso(subscription),
             updated_at: new Date().toISOString(),
           })
           .eq("stripe_subscription_id", subscription.id);

@@ -126,7 +126,7 @@ export default function SettingsPage() {
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-emerald-100 text-emerald-800 border border-emerald-200">
-                    Pro Active
+                    Subscribed
                   </span>
                 </div>
                 {subStatus.currentPeriodEnd && (

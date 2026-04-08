@@ -13,12 +13,80 @@ export default function AnalyzePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [subscribed, setSubscribed] = useState<boolean | null>(null);
+  const [accessMessage, setAccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/subscription/status")
-      .then((r) => r.json())
-      .then((d) => setSubscribed(!!d.active))
-      .catch(() => setSubscribed(false));
+    let cancelled = false;
+
+    async function loadStatus(): Promise<boolean> {
+      try {
+        const r = await fetch("/api/subscription/status");
+        const d = await r.json();
+        const active = !!d.active;
+        if (!cancelled) setSubscribed(active);
+        return active;
+      } catch {
+        if (!cancelled) setSubscribed(false);
+        return false;
+      }
+    }
+
+    async function init() {
+      const params = new URLSearchParams(window.location.search);
+      const checkout = params.get("checkout");
+      const sessionId = params.get("session_id");
+
+      if (checkout === "success" && sessionId) {
+        if (!cancelled) setAccessMessage("Activating your subscription…");
+        try {
+          const sync = await fetch("/api/stripe/sync-checkout-session", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ sessionId }),
+          });
+          if (!sync.ok && !cancelled) {
+            const err = await sync.json().catch(() => ({}));
+            setAccessMessage(
+              typeof (err as { error?: string }).error === "string"
+                ? (err as { error: string }).error
+                : "Could not confirm payment yet. If you were charged, wait a minute and refresh."
+            );
+          }
+        } catch {
+          if (!cancelled) {
+            setAccessMessage(
+              "Could not confirm payment yet. Try refreshing in a moment."
+            );
+          }
+        }
+        window.history.replaceState({}, "", "/analyze");
+      }
+
+      let active = await loadStatus();
+
+      if (checkout === "success" && !active) {
+        for (let i = 0; i < 15 && !cancelled && !active; i++) {
+          await new Promise((r) => setTimeout(r, 1000));
+          active = await loadStatus();
+        }
+      }
+
+      if (!cancelled) {
+        if (!active && checkout === "success") {
+          setAccessMessage(
+            "Payment may still be processing. Refresh this page in a minute or open Settings."
+          );
+        } else {
+          setAccessMessage(null);
+        }
+      }
+    }
+
+    init();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleSubmit = async (scenario: ScenarioInput) => {
@@ -57,8 +125,13 @@ export default function AnalyzePage() {
     return (
       <div className="min-h-screen flex flex-col bg-navy-50">
         <Header />
-        <div className="flex-1 flex items-center justify-center">
+        <div className="flex-1 flex flex-col items-center justify-center gap-3 px-4">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-navy-200 border-t-gold-500" />
+          {accessMessage && (
+            <p className="text-navy-600 text-sm text-center max-w-md">
+              {accessMessage}
+            </p>
+          )}
         </div>
         <Footer />
       </div>
@@ -69,7 +142,12 @@ export default function AnalyzePage() {
     return (
       <div className="min-h-screen flex flex-col bg-navy-50">
         <Header />
-        <main className="flex-1 flex items-center justify-center p-8">
+        <main className="flex-1 flex flex-col items-center justify-center p-8 gap-4">
+          {accessMessage && (
+            <div className="max-w-lg w-full bg-amber-50 border border-amber-200 rounded-xl p-4 text-amber-900 text-sm text-center">
+              {accessMessage}
+            </div>
+          )}
           <Paywall />
         </main>
         <Footer />
