@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getSubscriptionStatus } from "@/lib/subscription";
+import { consumeFreeAnalysisUse, getAccessStatus } from "@/lib/access";
 import { analyzeScenario } from "@/lib/analysis";
 
 export const dynamic = "force-dynamic";
@@ -126,10 +126,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const status = await getSubscriptionStatus(user.id);
-    if (!status.active) {
+    const access = await getAccessStatus(user.id);
+    if (!access.canAnalyze) {
       return NextResponse.json(
-        { error: "Active subscription required" },
+        {
+          error:
+            access.freeAnalysesLimit > 0
+              ? "No free analyses remaining. Subscribe to continue."
+              : "Active subscription required",
+          freeAnalysesRemaining: access.freeAnalysesRemaining,
+          freeAnalysesLimit: access.freeAnalysesLimit,
+        },
         { status: 403 }
       );
     }
@@ -150,6 +157,20 @@ export async function POST(request: Request) {
         { error: validation.error },
         { status: 400 }
       );
+    }
+
+    if (!access.active) {
+      const consume = await consumeFreeAnalysisUse(user.id);
+      if (!consume.ok) {
+        return NextResponse.json(
+          {
+            error: "No free analyses remaining. Subscribe to continue.",
+            freeAnalysesRemaining: 0,
+            freeAnalysesLimit: access.freeAnalysesLimit,
+          },
+          { status: 403 }
+        );
+      }
     }
 
     const result = await analyzeScenario(validation.scenario);

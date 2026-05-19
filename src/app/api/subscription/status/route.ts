@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getSubscriptionStatus } from "@/lib/subscription";
+import { FREE_AI_USES_LIMIT, getAccessStatus } from "@/lib/access";
 
 export const dynamic = "force-dynamic";
 
@@ -12,12 +12,26 @@ export async function GET() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ active: false });
+      return NextResponse.json({
+        active: false,
+        canAnalyze: false,
+        canChat: false,
+        freeAnalysesRemaining: 0,
+        freeAnalysesLimit: FREE_AI_USES_LIMIT,
+        source: "none",
+      });
     }
 
-    const status = await getSubscriptionStatus(user.id);
-    return NextResponse.json(status);
+    const access = await getAccessStatus(user.id);
+    return NextResponse.json(access);
   } catch {
-    return NextResponse.json({ active: false });
+    return NextResponse.json({
+      active: false,
+      canAnalyze: false,
+      canChat: false,
+      freeAnalysesRemaining: 0,
+      freeAnalysesLimit: FREE_AI_USES_LIMIT,
+      source: "none",
+    });
   }
 }

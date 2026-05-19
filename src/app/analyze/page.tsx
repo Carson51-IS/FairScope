@@ -8,11 +8,18 @@ import ScenarioForm from "@/components/ScenarioForm";
 import Paywall from "@/components/Paywall";
 import type { ScenarioInput, AnalysisResult } from "@/lib/types";
 
+interface AccessState {
+  active: boolean;
+  canAnalyze: boolean;
+  freeAnalysesRemaining: number;
+  freeAnalysesLimit: number;
+}
+
 export default function AnalyzePage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [subscribed, setSubscribed] = useState<boolean | null>(null);
+  const [access, setAccess] = useState<AccessState | null>(null);
   const [accessMessage, setAccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -22,11 +29,22 @@ export default function AnalyzePage() {
       try {
         const r = await fetch("/api/subscription/status");
         const d = await r.json();
-        const active = !!d.active;
-        if (!cancelled) setSubscribed(active);
-        return active;
+        const next: AccessState = {
+          active: !!d.active,
+          canAnalyze: !!d.canAnalyze,
+          freeAnalysesRemaining: Number(d.freeAnalysesRemaining ?? 0),
+          freeAnalysesLimit: Number(d.freeAnalysesLimit ?? 0),
+        };
+        if (!cancelled) setAccess(next);
+        return next.active;
       } catch {
-        if (!cancelled) setSubscribed(false);
+        if (!cancelled)
+          setAccess({
+            active: false,
+            canAnalyze: false,
+            freeAnalysesRemaining: 0,
+            freeAnalysesLimit: 0,
+          });
         return false;
       }
     }
@@ -121,7 +139,7 @@ export default function AnalyzePage() {
     }
   };
 
-  if (subscribed === null) {
+  if (access === null) {
     return (
       <div className="min-h-screen flex flex-col bg-navy-50">
         <Header />
@@ -138,7 +156,7 @@ export default function AnalyzePage() {
     );
   }
 
-  if (!subscribed) {
+  if (!access.canAnalyze) {
     return (
       <div className="min-h-screen flex flex-col bg-navy-50">
         <Header />
@@ -148,12 +166,23 @@ export default function AnalyzePage() {
               {accessMessage}
             </div>
           )}
+          {access.freeAnalysesLimit > 0 && !access.active && (
+            <div className="max-w-lg w-full bg-navy-100 border border-navy-200 rounded-xl p-4 text-navy-800 text-sm text-center">
+              You&apos;ve used your free analysis. Subscribe to continue running
+              analyses.
+            </div>
+          )}
           <Paywall />
         </main>
         <Footer />
       </div>
     );
   }
+
+  const showFreeBanner =
+    !access.active &&
+    access.freeAnalysesLimit > 0 &&
+    access.freeAnalysesRemaining > 0;
 
   return (
     <div className="min-h-screen flex flex-col bg-navy-50">
@@ -171,6 +200,17 @@ export default function AnalyzePage() {
               federal case law.
             </p>
           </div>
+
+          {showFreeBanner && (
+            <div className="mb-6 bg-amber-50 border border-amber-200 rounded-xl p-4 text-amber-900 text-sm text-center">
+              Free trial:{" "}
+              <strong>
+                {access.freeAnalysesRemaining} free{" "}
+                {access.freeAnalysesRemaining === 1 ? "analysis" : "analyses"}
+              </strong>{" "}
+              remaining. After that, a subscription is required.
+            </div>
+          )}
 
           {error && (
             <div className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4 text-red-700 text-sm">

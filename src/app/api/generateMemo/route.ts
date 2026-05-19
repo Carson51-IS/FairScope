@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import { getAccessStatus } from "@/lib/access";
 import { getOpenAI, isOpenAIConfigured, logTokenUsage, truncatePassage } from "@/lib/openai";
 import type { RetrievedPassage } from "@/lib/retrieval";
 
@@ -26,6 +28,23 @@ function validateMemoResponse(obj: unknown): obj is MemoResponse {
 
 export async function POST(request: Request) {
   try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const access = await getAccessStatus(user.id);
+    if (!access.canAnalyze) {
+      return NextResponse.json(
+        { error: "Active subscription required" },
+        { status: 403 }
+      );
+    }
+
     const body: MemoRequest = await request.json();
 
     if (!body.scenario || !body.passages) {

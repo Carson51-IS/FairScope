@@ -8,6 +8,8 @@ import { createClient } from "@/lib/supabase/client";
 export default function HomeCTA() {
   const [user, setUser] = useState<{ email?: string } | null>(null);
   const [subscribed, setSubscribed] = useState(false);
+  const [canAnalyze, setCanAnalyze] = useState(false);
+  const [freeRemaining, setFreeRemaining] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,6 +23,8 @@ export default function HomeCTA() {
         const res = await fetch("/api/subscription/status");
         const data = await res.json();
         setSubscribed(!!data.active);
+        setCanAnalyze(!!data.canAnalyze);
+        setFreeRemaining(Number(data.freeAnalysesRemaining ?? 0));
       }
       setLoading(false);
     };
@@ -57,6 +61,24 @@ export default function HomeCTA() {
   }
 
   if (!subscribed) {
+    if (canAnalyze && freeRemaining > 0) {
+      return (
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <Link
+            href="/analyze"
+            className="group flex items-center gap-2 bg-gold-500 hover:bg-gold-400 text-navy-950 px-8 py-4 rounded-xl text-lg font-semibold transition-all shadow-lg shadow-gold-500/25 hover:shadow-gold-500/40"
+          >
+            Try a free analysis
+            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+          </Link>
+          <p className="text-navy-300 text-sm">
+            {freeRemaining} free {freeRemaining === 1 ? "analysis" : "analyses"}{" "}
+            remaining
+          </p>
+        </div>
+      );
+    }
+
     return (
       <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
         <Link
