@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Send, FileText, Scale, Info, MapPin } from "lucide-react";
 import type { UseType, ScenarioInput, CircuitId } from "@/lib/types";
 
@@ -62,6 +62,24 @@ const CIRCUIT_OPTIONS: { value: CircuitId; label: string }[] = [
 const MIN_DESCRIPTION_LENGTH = 20;
 const MIN_PURPOSE_LENGTH = 3;
 
+type FieldErrorKey = "description" | "purpose";
+
+const FIELD_SCROLL_ORDER: FieldErrorKey[] = ["description", "purpose"];
+
+function scrollToFirstFieldError(
+  errors: Partial<Record<FieldErrorKey, string>>,
+  refs: Record<FieldErrorKey, React.RefObject<HTMLDivElement | null>>
+) {
+  const first = FIELD_SCROLL_ORDER.find((key) => errors[key]);
+  if (!first) return;
+  const container = refs[first].current;
+  if (container) {
+    container.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+  const input = document.getElementById(first);
+  input?.focus({ preventScroll: true });
+}
+
 function getSliderZoneColor(percent: number): string {
   if (percent <= 25) return "bg-emerald-500";
   if (percent <= 75) return "bg-amber-500";
@@ -81,6 +99,22 @@ export default function ScenarioForm({ onSubmit, isLoading }: ScenarioFormProps)
   const [additionalContext, setAdditionalContext] = useState("");
   const [jurisdiction, setJurisdiction] = useState<CircuitId>(null);
   const [errors, setErrors] = useState<{ description?: string; purpose?: string }>({});
+  const descriptionFieldRef = useRef<HTMLDivElement>(null);
+  const purposeFieldRef = useRef<HTMLDivElement>(null);
+  const shouldScrollToErrorsRef = useRef(false);
+
+  useEffect(() => {
+    if (!shouldScrollToErrorsRef.current) return;
+    if (Object.keys(errors).length === 0) {
+      shouldScrollToErrorsRef.current = false;
+      return;
+    }
+    scrollToFirstFieldError(errors, {
+      description: descriptionFieldRef,
+      purpose: purposeFieldRef,
+    });
+    shouldScrollToErrorsRef.current = false;
+  }, [errors]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,8 +132,12 @@ export default function ScenarioForm({ onSubmit, isLoading }: ScenarioFormProps)
       newErrors.purpose = `Please provide at least ${MIN_PURPOSE_LENGTH} characters for the purpose.`;
     }
 
-    setErrors(newErrors);
-    if (Object.keys(newErrors).length > 0) return;
+    if (Object.keys(newErrors).length > 0) {
+      shouldScrollToErrorsRef.current = true;
+      setErrors(newErrors);
+      return;
+    }
+    setErrors({});
 
     onSubmit({
       description: description.trim(),
@@ -129,7 +167,7 @@ export default function ScenarioForm({ onSubmit, isLoading }: ScenarioFormProps)
         </div>
 
         <div className="space-y-4">
-          <div>
+          <div ref={descriptionFieldRef}>
             <label
               htmlFor="description"
               className="block text-sm font-medium text-navy-700 mb-1"
@@ -152,13 +190,21 @@ export default function ScenarioForm({ onSubmit, isLoading }: ScenarioFormProps)
                   : "border-navy-200 focus:ring-gold-500"
               } focus:ring-2 focus:border-transparent bg-navy-50/50 text-navy-900 placeholder-navy-400 transition-colors`}
               disabled={isLoading}
+              aria-invalid={!!errors.description}
+              aria-describedby={errors.description ? "description-error" : undefined}
             />
             {errors.description && (
-              <p className="mt-1 text-sm text-red-600">{errors.description}</p>
+              <p
+                id="description-error"
+                role="alert"
+                className="mt-1 text-sm text-red-600"
+              >
+                {errors.description}
+              </p>
             )}
           </div>
 
-          <div>
+          <div ref={purposeFieldRef}>
             <label
               htmlFor="purpose"
               className="block text-sm font-medium text-navy-700 mb-1"
@@ -181,9 +227,17 @@ export default function ScenarioForm({ onSubmit, isLoading }: ScenarioFormProps)
                   : "border-navy-200 focus:ring-gold-500"
               } focus:ring-2 focus:border-transparent bg-navy-50/50 text-navy-900 placeholder-navy-400 transition-colors`}
               disabled={isLoading}
+              aria-invalid={!!errors.purpose}
+              aria-describedby={errors.purpose ? "purpose-error" : undefined}
             />
             {errors.purpose && (
-              <p className="mt-1 text-sm text-red-600">{errors.purpose}</p>
+              <p
+                id="purpose-error"
+                role="alert"
+                className="mt-1 text-sm text-red-600"
+              >
+                {errors.purpose}
+              </p>
             )}
           </div>
         </div>

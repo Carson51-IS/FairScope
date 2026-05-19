@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -21,6 +21,15 @@ export default function AnalyzePage() {
   const [error, setError] = useState<string | null>(null);
   const [access, setAccess] = useState<AccessState | null>(null);
   const [accessMessage, setAccessMessage] = useState<string | null>(null);
+  const errorBannerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!error) return;
+    errorBannerRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  }, [error]);
 
   useEffect(() => {
     let cancelled = false;
@@ -168,8 +177,8 @@ export default function AnalyzePage() {
           )}
           {access.freeAnalysesLimit > 0 && !access.active && (
             <div className="max-w-lg w-full bg-navy-100 border border-navy-200 rounded-xl p-4 text-navy-800 text-sm text-center">
-              You&apos;ve used your free analysis. Subscribe to continue running
-              analyses.
+              You&apos;ve used all your free analyses. Subscribe to continue
+              running analyses.
             </div>
           )}
           <Paywall />
@@ -213,7 +222,11 @@ export default function AnalyzePage() {
           )}
 
           {error && (
-            <div className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4 text-red-700 text-sm">
+            <div
+              ref={errorBannerRef}
+              role="alert"
+              className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4 text-red-700 text-sm"
+            >
               <strong>Error:</strong> {error}
             </div>
           )}

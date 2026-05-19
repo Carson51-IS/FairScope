@@ -4,7 +4,7 @@ import { getSubscriptionStatus } from "./subscription";
 export const FREE_AI_USES_LIMIT = (() => {
   const raw = process.env.FREE_AI_USES_LIMIT;
   const parsed = Number(raw);
-  if (!raw || !Number.isFinite(parsed) || parsed < 0) return 1;
+  if (!raw || !Number.isFinite(parsed) || parsed < 0) return 5;
   return Math.floor(parsed);
 })();
 
