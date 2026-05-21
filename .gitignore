@@ -36,3 +36,6 @@ next-env.d.ts
 # test artifacts
 /test-screenshots
 /test-results
+
+# Supabase CLI local state (contains project refs / connection hints)
+supabase/.temp/

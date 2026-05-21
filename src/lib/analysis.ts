@@ -1688,13 +1688,17 @@ async function generateMemoLLM(
 // Persist analysis to Supabase
 // ---------------------------------------------------------------------------
 
-async function persistAnalysis(result: AnalysisResult): Promise<void> {
+async function persistAnalysis(
+  result: AnalysisResult,
+  userId: string
+): Promise<void> {
   if (!isSupabaseConfigured()) return;
 
   try {
     const supabase = getSupabaseServer();
     await supabase.from("analyses").insert({
       id: result.id,
+      user_id: userId,
       scenario: result.scenario,
       structured_features: result.extracted_features,
       memo: result.memo ?? null,
@@ -1717,7 +1721,8 @@ async function persistAnalysis(result: AnalysisResult): Promise<void> {
 // ---------------------------------------------------------------------------
 
 export async function loadAnalysis(
-  id: string
+  id: string,
+  userId: string
 ): Promise<AnalysisResult | null> {
   if (!isSupabaseConfigured()) return null;
 
@@ -1727,6 +1732,7 @@ export async function loadAnalysis(
       .from("analyses")
       .select("full_result")
       .eq("id", id)
+      .eq("user_id", userId)
       .single();
 
     if (error || !data) return null;
@@ -1741,7 +1747,8 @@ export async function loadAnalysis(
 // ---------------------------------------------------------------------------
 
 export async function analyzeScenario(
-  scenario: ScenarioInput
+  scenario: ScenarioInput,
+  options?: { userId?: string }
 ): Promise<AnalysisResult> {
   // Step 1: Extract features (try LLM first, fall back to rule-based)
   let extracted: ExtractedFeatures;
@@ -1814,7 +1821,9 @@ export async function analyzeScenario(
   };
 
   // Step 7: Persist to Supabase (fire-and-forget)
-  persistAnalysis(result).catch(() => {});
+  if (options?.userId) {
+    persistAnalysis(result, options.userId).catch(() => {});
+  }
 
   return result;
 }

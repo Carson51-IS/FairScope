@@ -173,7 +173,9 @@ export async function POST(request: Request) {
       }
     }
 
-    const result = await analyzeScenario(validation.scenario);
+    const result = await analyzeScenario(validation.scenario, {
+      userId: user.id,
+    });
     return NextResponse.json(result);
   } catch (err) {
     console.error("Analyze API error:", err);
