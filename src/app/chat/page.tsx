@@ -19,25 +19,40 @@ export default function ChatPage() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
+  const [canChat, setCanChat] = useState(false);
+  const [auxRemaining, setAuxRemaining] = useState(0);
+  const [auxLimit, setAuxLimit] = useState(0);
+  const [canViewChat, setCanViewChat] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     async function load() {
       try {
-        const [statusRes, historyRes] = await Promise.all([
-          fetch("/api/subscription/status"),
-          fetch("/api/chat/history"),
-        ]);
-
+        const statusRes = await fetch("/api/subscription/status");
         const status = await statusRes.json();
-        setSubscribed(!!status.active);
+        const active = !!status.active;
+        const chatAllowed = !!status.canChat;
+        const limit = Number(status.freeAuxiliaryLimit ?? 0);
+        const remaining = Number(status.freeAuxiliaryRemaining ?? 0);
+        const usedAuxiliary = limit - remaining > 0;
 
-        if (status.active && historyRes.ok) {
-          const { messages: msgs } = await historyRes.json();
-          setMessages(msgs ?? []);
+        setSubscribed(active);
+        setCanChat(chatAllowed);
+        setAuxLimit(limit);
+        setAuxRemaining(remaining);
+        setCanViewChat(active || chatAllowed || usedAuxiliary);
+
+        if (active || usedAuxiliary) {
+          const historyRes = await fetch("/api/chat/history");
+          if (historyRes.ok) {
+            const { messages: msgs } = await historyRes.json();
+            setMessages(msgs ?? []);
+          }
         }
       } catch {
         setSubscribed(false);
+        setCanChat(false);
+        setCanViewChat(false);
       } finally {
         setLoading(false);
       }
@@ -77,7 +92,16 @@ export default function ChatPage() {
       if (!res.ok) {
         setMessages((prev) => prev.filter((m) => m.id !== userMsg.id));
         setInput(text);
+        if (res.status === 403) {
+          setCanChat(false);
+          setAuxRemaining(0);
+        }
         return;
+      }
+
+      if (typeof data.freeAuxiliaryRemaining === "number") {
+        setAuxRemaining(data.freeAuxiliaryRemaining);
+        setCanChat(data.freeAuxiliaryRemaining > 0 || subscribed);
       }
 
       const assistantMsg: ChatMessage = {
@@ -107,11 +131,17 @@ export default function ChatPage() {
     );
   }
 
-  if (!subscribed) {
+  if (!canViewChat) {
     return (
       <div className="min-h-screen flex flex-col bg-navy-50">
         <Header />
-        <main className="flex-1 flex items-center justify-center p-8">
+        <main className="flex-1 flex flex-col items-center justify-center p-8 gap-4">
+          {auxLimit > 0 && (
+            <p className="text-navy-600 text-sm text-center max-w-md">
+              Free accounts get {auxLimit} chat messages (separate from your
+              analysis quota). Subscribe for unlimited chat.
+            </p>
+          )}
           <Paywall />
         </main>
         <Footer />
@@ -132,6 +162,16 @@ export default function ChatPage() {
         </div>
         <p className="text-navy-600 text-sm mb-6">
           Ask questions about fair use. I remember our conversation and can reference earlier questions.
+          {!subscribed && auxLimit > 0 && canChat && (
+            <span className="block mt-1 text-navy-500">
+              {auxRemaining} of {auxLimit} free chat messages remaining.
+            </span>
+          )}
+          {!subscribed && !canChat && auxLimit > 0 && (
+            <span className="block mt-1 text-amber-700">
+              You&apos;ve used all {auxLimit} free chat messages. Subscribe to send more.
+            </span>
+          )}
         </p>
 
         <div className="flex-1 flex flex-col min-h-0 bg-white rounded-xl border border-navy-200 shadow-md overflow-hidden">
@@ -175,11 +215,11 @@ export default function ChatPage() {
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Ask about fair use..."
                 className="flex-1 px-4 py-3 rounded-lg border border-navy-200 focus:ring-2 focus:ring-gold-500 focus:border-transparent bg-navy-50/50 text-navy-900"
-                disabled={sending}
+                disabled={sending || !canChat}
               />
               <button
                 type="submit"
-                disabled={sending || !input.trim()}
+                disabled={sending || !canChat || !input.trim()}
                 className="px-4 py-3 rounded-lg bg-gold-500 hover:bg-gold-600 disabled:bg-gold-400 disabled:cursor-not-allowed text-navy-950 font-semibold transition-colors"
               >
                 <Send className="w-5 h-5" />

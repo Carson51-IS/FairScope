@@ -45,15 +45,26 @@ export default function ResultChat({ result }: ResultChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
-  const [subscribed, setSubscribed] = useState<boolean | null>(null);
+  const [canChat, setCanChat] = useState<boolean | null>(null);
+  const [subscribed, setSubscribed] = useState(false);
+  const [auxRemaining, setAuxRemaining] = useState(0);
+  const [auxLimit, setAuxLimit] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const analysisContext = buildAnalysisContext(result);
 
   useEffect(() => {
     fetch("/api/subscription/status")
       .then((r) => r.json())
-      .then((d) => setSubscribed(!!d.active))
-      .catch(() => setSubscribed(false));
+      .then((d) => {
+        setSubscribed(!!d.active);
+        setCanChat(!!d.canChat);
+        setAuxRemaining(Number(d.freeAuxiliaryRemaining ?? 0));
+        setAuxLimit(Number(d.freeAuxiliaryLimit ?? 0));
+      })
+      .catch(() => {
+        setSubscribed(false);
+        setCanChat(false);
+      });
   }, []);
 
   useEffect(() => {
@@ -88,7 +99,16 @@ export default function ResultChat({ result }: ResultChatProps) {
       if (!res.ok) {
         setMessages((prev) => prev.filter((m) => m.id !== userMsg.id));
         setInput(text);
+        if (res.status === 403) {
+          setCanChat(false);
+          setAuxRemaining(0);
+        }
         return;
+      }
+
+      if (typeof data.freeAuxiliaryRemaining === "number") {
+        setAuxRemaining(data.freeAuxiliaryRemaining);
+        setCanChat(data.freeAuxiliaryRemaining > 0 || subscribed);
       }
 
       const assistantMsg: ChatMessage = {
@@ -106,8 +126,23 @@ export default function ResultChat({ result }: ResultChatProps) {
     }
   };
 
-  if (subscribed === null) return null;
-  if (!subscribed) return null;
+  if (canChat === null) return null;
+
+  if (!canChat) {
+    return (
+      <div className="bg-white rounded-xl border border-navy-200 shadow-md shadow-navy-900/5 p-6">
+        <h2 className="font-display text-lg font-bold text-navy-900 flex items-center gap-2 mb-2">
+          <MessageCircle className="w-5 h-5 text-gold-600" />
+          Ask questions about this analysis
+        </h2>
+        <p className="text-navy-600 text-sm">
+          {auxLimit > 0 && !subscribed
+            ? `You've used all ${auxLimit} free chat messages. Subscribe for unlimited follow-up questions.`
+            : "Subscribe to ask follow-up questions about your analysis."}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-xl border border-navy-200 shadow-md shadow-navy-900/5 overflow-hidden">
@@ -118,6 +153,11 @@ export default function ResultChat({ result }: ResultChatProps) {
         </h2>
         <p className="text-navy-600 text-sm mt-1">
           Not sure what something means? Ask about any factor, case, or part of the result.
+          {!subscribed && auxLimit > 0 && (
+            <span className="block mt-1 text-navy-500">
+              {auxRemaining} of {auxLimit} free chat messages remaining.
+            </span>
+          )}
         </p>
       </div>
 
@@ -162,11 +202,11 @@ export default function ResultChat({ result }: ResultChatProps) {
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask about this analysis..."
               className="flex-1 px-4 py-3 rounded-lg border border-navy-200 focus:ring-2 focus:ring-gold-500 focus:border-transparent bg-navy-50/50 text-navy-900 text-sm"
-              disabled={sending}
+              disabled={sending || !canChat}
             />
             <button
               type="submit"
-              disabled={sending || !input.trim()}
+              disabled={sending || !canChat || !input.trim()}
               className="px-4 py-3 rounded-lg bg-gold-500 hover:bg-gold-600 disabled:bg-gold-400 disabled:cursor-not-allowed text-navy-950 font-semibold transition-colors"
             >
               <Send className="w-5 h-5" />

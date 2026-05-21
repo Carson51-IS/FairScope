@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { FREE_AI_USES_LIMIT, getAccessStatus } from "@/lib/access";
+import {
+  FREE_AI_USES_LIMIT,
+  FREE_AUXILIARY_AI_LIMIT,
+  getAccessStatus,
+} from "@/lib/access";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +22,8 @@ export async function GET() {
         canChat: false,
         freeAnalysesRemaining: 0,
         freeAnalysesLimit: FREE_AI_USES_LIMIT,
+        freeAuxiliaryRemaining: 0,
+        freeAuxiliaryLimit: FREE_AUXILIARY_AI_LIMIT,
         source: "none",
       });
     }
@@ -31,6 +37,8 @@ export async function GET() {
       canChat: false,
       freeAnalysesRemaining: 0,
       freeAnalysesLimit: FREE_AI_USES_LIMIT,
+      freeAuxiliaryRemaining: 0,
+      freeAuxiliaryLimit: FREE_AUXILIARY_AI_LIMIT,
       source: "none",
     });
   }

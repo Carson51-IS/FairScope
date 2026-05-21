@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getAccessStatus } from "@/lib/access";
+import {
+  canUseAuxiliaryAi,
+  consumeFreeAuxiliaryAiUse,
+  getAccessStatus,
+} from "@/lib/access";
 import { getOpenAI, isOpenAIConfigured, logTokenUsage } from "@/lib/openai";
 import { extractFeatures as extractFeaturesLocal } from "@/lib/analysis";
 import type { ScenarioInput, ExtractedFeatures } from "@/lib/types";
@@ -87,11 +91,29 @@ export async function POST(request: Request) {
     }
 
     const access = await getAccessStatus(user.id);
-    if (!access.canAnalyze) {
+    if (!canUseAuxiliaryAi(access)) {
       return NextResponse.json(
-        { error: "Active subscription required" },
+        {
+          error:
+            access.freeAuxiliaryLimit > 0
+              ? "No free AI uses remaining for this feature. Subscribe for unlimited access."
+              : "Subscribe to use this feature",
+        },
         { status: 403 }
       );
+    }
+
+    if (!access.active) {
+      const consume = await consumeFreeAuxiliaryAiUse(user.id);
+      if (!consume.ok) {
+        return NextResponse.json(
+          {
+            error:
+              "No free AI uses remaining for this feature. Subscribe for unlimited access.",
+          },
+          { status: 403 }
+        );
+      }
     }
 
     const body = await request.json();
